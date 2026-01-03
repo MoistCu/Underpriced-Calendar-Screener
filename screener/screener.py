@@ -241,6 +241,9 @@ def screen_one_symbol(symbol: str,
     rows: List[Dict] = []
     try:
         t = yf.Ticker(symbol)
+        earn_dt = get_next_earnings_date_utc(t)
+        now_dt = datetime.now(timezone.utc)
+
 
         # Spot
         spot = safe_float(t.fast_info.get("last_price", np.nan) if hasattr(t, "fast_info") else np.nan)
@@ -276,6 +279,14 @@ def screen_one_symbol(symbol: str,
         time.sleep(sleep_s)
 
         for p in pairs:
+            if earn_dt is not None:
+              front_exp_dt = datetime.strptime(
+                  p.front_exp, "%Y-%m-%d"
+              ).replace(tzinfo=timezone.utc)
+          
+              # Exclude if earnings occur before or on front expiry
+              if now_dt < earn_dt <= front_exp_dt:
+                  continue
             ch_f = get_chain(p.front_exp)
             ch_b = get_chain(p.back_exp)
 
@@ -379,7 +390,37 @@ def screen_one_symbol(symbol: str,
 
     return rows
 
+def get_next_earnings_date_utc(t: yf.Ticker):
+    """
+    Returns next earnings datetime in UTC, or None if unavailable.
+    """
+    try:
+        cal = t.calendar
+        if cal is None or cal is False:
+            return None
+        if hasattr(cal, "empty") and cal.empty:
+            return None
 
+        if "Earnings Date" not in cal.index:
+            return None
+
+        v = cal.loc["Earnings Date"]
+        if isinstance(v, (pd.Series, pd.DataFrame)):
+            v = v.iloc[0]
+
+        dt = pd.to_datetime(v, errors="coerce")
+        if pd.isna(dt):
+            return None
+
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+
+        return dt
+    except Exception:
+        return None
+      
 def run_screen(tickers: List[str],
                min_front_iv: float,
                forward_factor_min: float,
