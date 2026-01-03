@@ -217,7 +217,37 @@ def generate_pairs(expiries: List[str],
             if len(pairs) >= max_pairs_per_ticker:
                 return pairs
     return pairs
+                     
+def get_next_earnings_date_utc(t: yf.Ticker):
+    """
+    Returns next earnings datetime in UTC, or None if unavailable.
+    """
+    try:
+        cal = t.calendar
+        if cal is None or cal is False:
+            return None
+        if hasattr(cal, "empty") and cal.empty:
+            return None
 
+        if "Earnings Date" not in cal.index:
+            return None
+
+        v = cal.loc["Earnings Date"]
+        if isinstance(v, (pd.Series, pd.DataFrame)):
+            v = v.iloc[0]
+
+        dt = pd.to_datetime(v, errors="coerce")
+        if pd.isna(dt):
+            return None
+
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+
+        return dt
+    except Exception:
+        return None
 
 # -----------------------------
 # Screener core
@@ -389,37 +419,6 @@ def screen_one_symbol(symbol: str,
         return rows
 
     return rows
-
-def get_next_earnings_date_utc(t: yf.Ticker):
-    """
-    Returns next earnings datetime in UTC, or None if unavailable.
-    """
-    try:
-        cal = t.calendar
-        if cal is None or cal is False:
-            return None
-        if hasattr(cal, "empty") and cal.empty:
-            return None
-
-        if "Earnings Date" not in cal.index:
-            return None
-
-        v = cal.loc["Earnings Date"]
-        if isinstance(v, (pd.Series, pd.DataFrame)):
-            v = v.iloc[0]
-
-        dt = pd.to_datetime(v, errors="coerce")
-        if pd.isna(dt):
-            return None
-
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        else:
-            dt = dt.astimezone(timezone.utc)
-
-        return dt
-    except Exception:
-        return None
       
 def run_screen(tickers: List[str],
                min_front_iv: float,
