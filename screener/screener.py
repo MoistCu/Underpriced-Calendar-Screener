@@ -1,30 +1,3 @@
-"""
-Forward-Vol Mispricing Screener (NO Tkinter) — Long ATM CALL Calendar
-
-What it finds:
-  1) Liquid tickers with HIGH near-term (front) ATM call IV
-  2) For MANY expiry pairs (front/back), compute forward vol + a "forward factor"
-  3) Show only opportunities where forward_factor >= threshold (default 20%)
-
-Key formulas:
-  - ATM strike: closest strike to spot (from FRONT call chain)
-  - Forward vol between expiries:
-        fwd^2 = (iv_back^2 * T_back - iv_front^2 * T_front) / (T_back - T_front)
-  - Forward factor (mispricing score for long calendar):
-        forward_factor = (iv_front - forward_vol) / iv_front
-
-Strategy pricing (Long ATM call calendar = Buy back, Sell front):
-  - strategy_mid_debit    = mid(back) - mid(front)
-  - strategy_natural_debit= ask(back) - bid(front)
-
-Universe:
-  - Top N "most active" tickers from Yahoo Finance page (with fallback list)
-  - OR parse tickers from a string
-
-Install:
-  pip install yfinance pandas numpy lxml html5lib
-"""
-
 from __future__ import annotations
 
 import time
@@ -217,37 +190,7 @@ def generate_pairs(expiries: List[str],
             if len(pairs) >= max_pairs_per_ticker:
                 return pairs
     return pairs
-                     
-def get_next_earnings_date_utc(t: yf.Ticker):
-    """
-    Returns next earnings datetime in UTC, or None if unavailable.
-    """
-    try:
-        cal = t.calendar
-        if cal is None or cal is False:
-            return None
-        if hasattr(cal, "empty") and cal.empty:
-            return None
 
-        if "Earnings Date" not in cal.index:
-            return None
-
-        v = cal.loc["Earnings Date"]
-        if isinstance(v, (pd.Series, pd.DataFrame)):
-            v = v.iloc[0]
-
-        dt = pd.to_datetime(v, errors="coerce")
-        if pd.isna(dt):
-            return None
-
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        else:
-            dt = dt.astimezone(timezone.utc)
-
-        return dt
-    except Exception:
-        return None
 
 # -----------------------------
 # Screener core
@@ -271,9 +214,6 @@ def screen_one_symbol(symbol: str,
     rows: List[Dict] = []
     try:
         t = yf.Ticker(symbol)
-        earn_dt = get_next_earnings_date_utc(t)
-        now_dt = datetime.now(timezone.utc)
-
 
         # Spot
         spot = safe_float(t.fast_info.get("last_price", np.nan) if hasattr(t, "fast_info") else np.nan)
@@ -309,14 +249,6 @@ def screen_one_symbol(symbol: str,
         time.sleep(sleep_s)
 
         for p in pairs:
-            if earn_dt is not None:
-              front_exp_dt = datetime.strptime(
-                  p.front_exp, "%Y-%m-%d"
-              ).replace(tzinfo=timezone.utc)
-          
-              # Exclude if earnings occur before or on front expiry
-              if now_dt < earn_dt <= front_exp_dt:
-                  continue
             ch_f = get_chain(p.front_exp)
             ch_b = get_chain(p.back_exp)
 
@@ -419,7 +351,8 @@ def screen_one_symbol(symbol: str,
         return rows
 
     return rows
-      
+
+
 def run_screen(tickers: List[str],
                min_front_iv: float,
                forward_factor_min: float,
