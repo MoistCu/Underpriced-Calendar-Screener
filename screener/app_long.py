@@ -46,7 +46,7 @@ with st.sidebar:
 
     manual_tickers = st.text_area(
         "Or paste tickers (comma / space / newline)",
-        value="SPY, QQQ, AAPL, MSFT, NVDA",
+        value="NVDA, TSLA, IBIT, INTC, NFLX, AAPL, AMZN, NIO, SOFI, PLTR, AMD, GOOGL, ASST, PFE, RIVN, MSTR, META, BAC, AAL, SMCI, MARA, IREN, GRAB, MSFT, WBD, WULF, AVGO, ORCL, VALE, CORZ, JD, HOOD, F, CRWV, PYPL, SNAP, BABA, EOSE, GOOG, ETHA, MU, LCID, NKE, NU, TSM, C, BMNR, NVO, UNH, RIOT, UBER, PLUG, CMCSA, FCX, B, CIFR, CMG, COIN, PBR, GME1, RIG, VZ, CLSK, PDD, CCL, GME, MRVL, BULL, T, BBAI, BA, BITF, WFC, OXY, AMC, MRNA, KVUE, ASTS, ET, LYFT, OPEN, WMT, XOM, CSCO, HIMS, ACHR, PATH, RKT, AG, RKLB, ONDS, ARM, TTD, RGTI, SLB, NEM, APLD, MPW, HTZ, DKNG, QBTS, QS, POET, SOUN, U, NBIS, LAES, FUBO, TGT, PSKY, BE, SBET, BTG, CLF, JPM, DAL, SBUX",
         height=110,
         disabled=use_most_active,
     )
