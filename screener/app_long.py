@@ -15,7 +15,7 @@ import time
 import streamlit as st
 import pandas as pd
 
-from screener import (
+from long_calendar import (
     run_screen,
     fetch_top_most_active_tickers,
     parse_manual_tickers,
@@ -29,7 +29,7 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("📆 Forward-Vol Mispricing Screener")
+st.title("Forward-Vol Mispricing for Long Call Calendars Screener")
 st.caption(
     "Long ATM **call calendars** where near-term IV is high "
     "and forward volatility is materially cheaper (mispricing)."
