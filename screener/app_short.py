@@ -29,7 +29,7 @@ st.caption(
 with st.sidebar:
     st.header("Universe")
 
-    use_most_active = st.checkbox("Use Yahoo Most Active", value=True)
+    use_most_active = st.checkbox("Use Yahoo Most Active", value=False)
     top_n = st.number_input("Top N (most active)", 1, 500, 100, step=5)
 
     manual_tickers = st.text_area(
